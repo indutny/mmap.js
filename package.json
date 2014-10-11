@@ -1,0 +1,29 @@
+{
+  "name": "mmap.js",
+  "version": "0.0.0",
+  "description": "mmap bindings for node.js that work",
+  "main": "lib/mmap.js",
+  "scripts": {
+    "test": "mocha -gc --reporter=spec test/**/*-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:indutny/mmap.js"
+  },
+  "keywords": [
+    "mmap"
+  ],
+  "author": "Fedor Indutny <fedor@indutny.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/indutny/mmap.js/issues"
+  },
+  "homepage": "https://github.com/indutny/mmap.js",
+  "devDependencies": {
+    "mocha": "^1.21.5"
+  },
+  "dependencies": {
+    "bindings": "^1.2.1",
+    "nan": "^1.3.0"
+  }
+}
