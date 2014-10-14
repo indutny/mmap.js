@@ -35,4 +35,22 @@ describe('mmap.js', function() {
       gc();
     });
   });
+
+  describe('.alignedAlloc()', function() {
+    it('should allocate aligned memory', function() {
+      var buf = mmap.alignedAlloc(
+          mmap.PAGE_SIZE,
+          mmap.PROT_READ | mmap.PROT_WRITE,
+          mmap.MAP_ANON | mmap.MAP_PRIVATE,
+          -1,
+          0,
+          1024 * 1024);
+      assert(buf);
+      assert.equal(buf.length, mmap.PAGE_SIZE);
+
+      buf[0] = 123;
+      buf = null;
+      gc();
+    });
+  });
 });
