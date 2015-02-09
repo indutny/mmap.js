@@ -85,9 +85,51 @@ NAN_METHOD(AlignedAlloc) {
 }
 
 
+NAN_METHOD(Sync) {
+  NanScope();
+  char* data = node::Buffer::Data(args[0]->ToObject());
+  size_t length =  node::Buffer::Length(args[0]->ToObject());
+
+  if (args.Length() > 1) {
+    // optional argument: offset
+    const size_t offset = args[1]->Uint32Value();
+    if (length <= offset) {
+      NanReturnValue(NanUndefined());
+    }
+
+    data += offset;
+    length -= offset;
+  }
+
+  if (args.Length() > 2) {
+    // optional argument: length
+    const size_t range = args[2]->Uint32Value();
+    if (range < length) {
+      length = range;
+    }
+  }
+
+  int flags;
+  if (args.Length() > 3) {
+    // optional argument: flags
+    flags = args[3]->Uint32Value();
+  }
+  else {
+    flags = MS_SYNC;
+  }
+
+  if (msync(data, length, flags) == 0) {
+    NanReturnValue(NanTrue());
+  }
+  else {
+    NanReturnValue(NanFalse());
+  }
+}
+
 static void Init(Handle<Object> target) {
   NODE_SET_METHOD(target, "alloc", Alloc);
   NODE_SET_METHOD(target, "alignedAlloc", AlignedAlloc);
+  NODE_SET_METHOD(target, "sync", Sync);
 
   target->Set(NanNew("PROT_NONE"), NanNew<Number>(PROT_NONE));
   target->Set(NanNew("PROT_READ"), NanNew<Number>(PROT_READ));
@@ -98,6 +140,10 @@ static void Init(Handle<Object> target) {
   target->Set(NanNew("MAP_PRIVATE"), NanNew<Number>(MAP_PRIVATE));
   target->Set(NanNew("MAP_SHARED"), NanNew<Number>(MAP_SHARED));
   target->Set(NanNew("MAP_FIXED"), NanNew<Number>(MAP_FIXED));
+
+  target->Set(NanNew("MS_ASYNC"), NanNew<Number>(MS_ASYNC));
+  target->Set(NanNew("MS_SYNC"), NanNew<Number>(MS_SYNC));
+  target->Set(NanNew("MS_INVALIDATE"), NanNew<Number>(MS_INVALIDATE));
 
   target->Set(NanNew("PAGE_SIZE"), NanNew<Number>(getpagesize()));
 }
