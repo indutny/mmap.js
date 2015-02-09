@@ -27,7 +27,7 @@ static void DontFree(char* data, void* hint) {
 
 
 NAN_METHOD(Alloc) {
-  NanEscapableScope();
+  NanScope();
 
   int len = args[0]->Uint32Value();
   int prot = args[1]->Uint32Value();
@@ -39,7 +39,7 @@ NAN_METHOD(Alloc) {
   if (res == MAP_FAILED)
     return NanThrowError("mmap() call failed");
 
-  return NanEscapeScope(NanNewBufferHandle(
+  NanReturnValue(NanNewBufferHandle(
         reinterpret_cast<char*>(res),
         len,
         FreeCallback,
@@ -48,7 +48,7 @@ NAN_METHOD(Alloc) {
 
 
 NAN_METHOD(AlignedAlloc) {
-  NanEscapableScope();
+  NanScope();
 
   int len = args[0]->Uint32Value();
   int prot = args[1]->Uint32Value();
@@ -68,9 +68,8 @@ NAN_METHOD(AlignedAlloc) {
         reinterpret_cast<void*>(static_cast<intptr_t>(len + align)));
 
   intptr_t ptr = reinterpret_cast<intptr_t>(res);
-  if (ptr % align == 0) {
-    return NanEscapeScope(buf);
-  }
+  if (ptr % align == 0)
+    NanReturnValue(buf);
 
   // Slice the buffer if it was unaligned
   int slice_off = align - (ptr % align);
@@ -81,7 +80,7 @@ NAN_METHOD(AlignedAlloc) {
       NULL);
 
   slice->SetHiddenValue(NanNew("alignParent"), buf);
-  return NanEscapeScope(slice);
+  NanReturnValue(slice);
 }
 
 
@@ -89,17 +88,17 @@ static void Init(Handle<Object> target) {
   NODE_SET_METHOD(target, "alloc", Alloc);
   NODE_SET_METHOD(target, "alignedAlloc", AlignedAlloc);
 
-  target->Set(NanNew("PROT_NONE"), NanNew<Number, uint32_t>(PROT_NONE));
-  target->Set(NanNew("PROT_READ"), NanNew<Number, uint32_t>(PROT_READ));
-  target->Set(NanNew("PROT_WRITE"), NanNew<Number, uint32_t>(PROT_WRITE));
-  target->Set(NanNew("PROT_EXEC"), NanNew<Number, uint32_t>(PROT_EXEC));
+  target->Set(NanNew("PROT_NONE"), NanNew<Number>(PROT_NONE));
+  target->Set(NanNew("PROT_READ"), NanNew<Number>(PROT_READ));
+  target->Set(NanNew("PROT_WRITE"), NanNew<Number>(PROT_WRITE));
+  target->Set(NanNew("PROT_EXEC"), NanNew<Number>(PROT_EXEC));
 
-  target->Set(NanNew("MAP_ANON"), NanNew<Number, uint32_t>(MAP_ANON));
-  target->Set(NanNew("MAP_PRIVATE"), NanNew<Number, uint32_t>(MAP_PRIVATE));
-  target->Set(NanNew("MAP_SHARED"), NanNew<Number, uint32_t>(MAP_SHARED));
-  target->Set(NanNew("MAP_FIXED"), NanNew<Number, uint32_t>(MAP_FIXED));
+  target->Set(NanNew("MAP_ANON"), NanNew<Number>(MAP_ANON));
+  target->Set(NanNew("MAP_PRIVATE"), NanNew<Number>(MAP_PRIVATE));
+  target->Set(NanNew("MAP_SHARED"), NanNew<Number>(MAP_SHARED));
+  target->Set(NanNew("MAP_FIXED"), NanNew<Number>(MAP_FIXED));
 
-  target->Set(NanNew("PAGE_SIZE"), NanNew<Number, uint32_t>(getpagesize()));
+  target->Set(NanNew("PAGE_SIZE"), NanNew<Number>(getpagesize()));
 }
 
 
