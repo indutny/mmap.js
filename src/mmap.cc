@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+namespace node {
 namespace node_mmap {
 
 using v8::Handle;
@@ -102,6 +103,7 @@ static void Init(Handle<Object> target) {
 }
 
 
-NODE_MODULE(mmap, Init);
-
 }  // namespace node_mmap
+}  // namespace node
+
+NODE_MODULE(mmap, node::node_mmap::Init);
