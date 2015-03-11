@@ -57,7 +57,7 @@ describe('mmap.js', function() {
   describe('.sync()', function () {
     before(function () {
       this.file = __dirname + '/test.txt';
-      fs.writeFileSync(this.file, 'Hello World');
+      fs.writeFileSync(this.file, Array(1000).join('Hello World '));
     });
     after(function (done) {
       fs.unlink(this.file, done);
@@ -65,22 +65,23 @@ describe('mmap.js', function() {
     it('should sync some memory to disk', function () {
       var fd = fs.openSync(this.file, 'r+');
       var buf = mmap.alloc(
-          mmap.PAGE_SIZE,
+          fs.fstatSync(fd).size,
           mmap.PROT_READ | mmap.PROT_WRITE,
           mmap.MAP_SHARED,
           fd,
           0);
       fs.closeSync(fd);
       assert(buf);
-      buf.write("! Greetings.", 11);
-      assert(mmap.sync(buf, 0, 23, mmap.MS_SYNC));
-
-      assert(/Hello World! Greetings./.test(buf.toString('utf8')));
+      buf.write("There", 6);
+      buf.write("There", buf.length - 6);
+      assert(/Hello There/.test(buf.toString('utf8')));
+      assert(mmap.sync(buf, 0, mmap.PAGE_SIZE, mmap.MS_SYNC));
+      assert(mmap.sync(buf, mmap.PAGE_SIZE, mmap.PAGE_SIZE, mmap.MS_SYNC));
+      var content = fs.readFileSync(this.file, 'utf8');
+      assert(content.slice(0, 11) === 'Hello There');
+      assert(content.slice(-12) === 'Hello There ');
       buf = null;
       gc();
-
-      var content = fs.readFileSync(this.file, 'utf8');
-      assert(content === 'Hello World! Greetings.');
     });
   });
 });

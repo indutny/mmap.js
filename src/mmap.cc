@@ -2,9 +2,11 @@
 #include "node_buffer.h"
 #include "v8.h"
 #include "nan.h"
+#include "errno.h"
 
 #include <sys/mman.h>
 #include <unistd.h>
+#include <string>
 
 namespace node {
 namespace node_mmap {
@@ -94,11 +96,12 @@ NAN_METHOD(Sync) {
     // optional argument: offset
     const size_t offset = args[1]->Uint32Value();
     if (length <= offset) {
-      NanReturnValue(NanUndefined());
+      return NanThrowError("Offset out of bounds", 22);
     }
 
     data += offset;
     length -= offset;
+
   }
 
   if (args.Length() > 2) {
@@ -122,7 +125,7 @@ NAN_METHOD(Sync) {
     NanReturnValue(NanTrue());
   }
   else {
-    NanReturnValue(NanFalse());
+    return NanThrowError(strerror(errno), errno);
   }
 }
 
