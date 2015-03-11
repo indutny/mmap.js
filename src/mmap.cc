@@ -6,7 +6,6 @@
 
 #include <sys/mman.h>
 #include <unistd.h>
-#include <string>
 
 namespace node {
 namespace node_mmap {
@@ -97,6 +96,9 @@ NAN_METHOD(Sync) {
     const size_t offset = args[1]->Uint32Value();
     if (length <= offset) {
       return NanThrowError("Offset out of bounds", 22);
+    }
+    else if (offset > 0 && (offset % getpagesize())) {
+      return NanThrowError("Offset must be a multiple of page size", 22);
     }
 
     data += offset;

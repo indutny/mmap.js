@@ -55,11 +55,11 @@ describe('mmap.js', function() {
   });
 
   describe('.sync()', function () {
-    before(function () {
+    beforeEach(function () {
       this.file = __dirname + '/test.txt';
       fs.writeFileSync(this.file, Array(1000).join('Hello World '));
     });
-    after(function (done) {
+    afterEach(function (done) {
       fs.unlink(this.file, done);
     });
     it('should sync some memory to disk', function () {
@@ -82,6 +82,45 @@ describe('mmap.js', function() {
       assert(content.slice(-12) === 'Hello There ');
       buf = null;
       gc();
+    });
+
+    describe('sync errors', function () {
+      var buf;
+      beforeEach(function () {
+        var fd = fs.openSync(this.file, 'r+');
+        buf = mmap.alloc(
+            fs.fstatSync(fd).size,
+            mmap.PROT_READ | mmap.PROT_WRITE,
+            mmap.MAP_SHARED,
+            fd,
+            0);
+        fs.closeSync(fd);
+        assert(buf);
+      });
+
+      it('should reject invalid page size offsets', function () {
+        var threw = false;
+        try {
+          mmap.sync(buf, 2);
+        }
+        catch (e) {
+          assert(/multiple of page size/i.test(e.message));
+          threw = true;
+        }
+        assert(threw);
+      });
+
+      it('should reject offsets larger than the length', function () {
+        var threw = false;
+        try {
+          mmap.sync(buf, 2000000000);
+        }
+        catch (e) {
+          assert(/offset out of bounds/i.test(e.message));
+          threw = true;
+        }
+        assert(threw);
+      });
     });
   });
 });
