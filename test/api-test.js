@@ -1,6 +1,7 @@
 // mmap test
 var assert = require('assert');
 var fs = require('fs');
+var os = require('os');
 var mmap = require('../');
 
 describe('mmap.js', function() {
@@ -56,14 +57,17 @@ describe('mmap.js', function() {
 
   describe('.sync()', function () {
     beforeEach(function () {
-      this.file = __dirname + '/test.txt';
-      fs.writeFileSync(this.file, Array(1000).join('Hello World '));
+      this.file1 = os.tmpDir() + '/test.txt';
+      this.file2 = os.tmpDir() + '/test-4-pages.txt';
+      fs.writeFileSync(this.file1, Array(1000).join('Hello World '));
+      fs.writeFileSync(this.file2, (new Buffer(mmap.PAGE_SIZE * 4)).fill(0));
     });
-    afterEach(function (done) {
-      fs.unlink(this.file, done);
+    afterEach(function () {
+      fs.unlinkSync(this.file1);
+      fs.unlinkSync(this.file2);
     });
     it('should sync some memory to disk', function () {
-      var fd = fs.openSync(this.file, 'r+');
+      var fd = fs.openSync(this.file1, 'r+');
       var buf = mmap.alloc(
           fs.fstatSync(fd).size,
           mmap.PROT_READ | mmap.PROT_WRITE,
@@ -77,17 +81,16 @@ describe('mmap.js', function() {
       assert(/Hello There/.test(buf.toString('utf8')));
       assert(mmap.sync(buf, 0, mmap.PAGE_SIZE, mmap.MS_SYNC));
       assert(mmap.sync(buf, mmap.PAGE_SIZE, mmap.PAGE_SIZE, mmap.MS_SYNC));
-      var content = fs.readFileSync(this.file, 'utf8');
+      var content = fs.readFileSync(this.file1, 'utf8');
       assert(content.slice(0, 11) === 'Hello There');
       assert(content.slice(-12) === 'Hello There ');
       buf = null;
       gc();
     });
 
+
     it('should sync 4 pages at once', function () {
-      var file = __dirname + '/test-4-pages.txt';
-      fs.writeFileSync(file, (new Buffer(mmap.PAGE_SIZE * 4)).fill(0));
-      var fd = fs.openSync(file, 'r+');
+      var fd = fs.openSync(this.file2, 'r+');
       var buf = mmap.alloc(
           mmap.PAGE_SIZE * 4,
           mmap.PROT_READ | mmap.PROT_WRITE,
@@ -95,26 +98,19 @@ describe('mmap.js', function() {
           fd,
           0);
       fs.closeSync(fd);
-      try {
-        assert(buf);
-        buf.fill(65);
-        assert(mmap.sync(buf));
-        var content = fs.readFileSync(file);
-        for (var i = 0; i < content.length; i++) {
-          assert(content[i] === 65);
-        }
-        fs.unlinkSync(file);
-      }
-      catch (e) {
-        fs.unlinkSync(file);
-        throw e;
+      assert(buf);
+      buf.fill(65);
+      assert(mmap.sync(buf));
+      var content = fs.readFileSync(this.file2);
+      for (var i = 0; i < content.length; i++) {
+        assert(content[i] === 65);
       }
     });
 
     describe('sync errors', function () {
       var buf;
       beforeEach(function () {
-        var fd = fs.openSync(this.file, 'r+');
+        var fd = fs.openSync(this.file1, 'r+');
         buf = mmap.alloc(
             fs.fstatSync(fd).size,
             mmap.PROT_READ | mmap.PROT_WRITE,
@@ -129,8 +125,7 @@ describe('mmap.js', function() {
         var threw = false;
         try {
           mmap.sync(buf, 2);
-        }
-        catch (e) {
+        } catch (e) {
           assert(/multiple of page size/i.test(e.message));
           threw = true;
         }
@@ -141,8 +136,7 @@ describe('mmap.js', function() {
         var threw = false;
         try {
           mmap.sync(buf, 2000000000);
-        }
-        catch (e) {
+        } catch (e) {
           assert(/offset out of bounds/i.test(e.message));
           threw = true;
         }
