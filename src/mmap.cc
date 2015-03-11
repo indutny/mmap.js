@@ -96,14 +96,12 @@ NAN_METHOD(Sync) {
     const size_t offset = args[1]->Uint32Value();
     if (length <= offset) {
       return NanThrowRangeError("Offset out of bounds");
-    }
-    else if (offset > 0 && (offset % getpagesize())) {
+    } else if (offset > 0 && (offset % getpagesize())) {
       return NanThrowRangeError("Offset must be a multiple of page size");
     }
 
     data += offset;
     length -= offset;
-
   }
 
   if (args.Length() > 2) {
@@ -118,15 +116,13 @@ NAN_METHOD(Sync) {
   if (args.Length() > 3) {
     // optional argument: flags
     flags = args[3]->Uint32Value();
-  }
-  else {
+  } else {
     flags = MS_SYNC;
   }
 
   if (msync(data, length, flags) == 0) {
     NanReturnValue(NanTrue());
-  }
-  else {
+  } else {
     return NanThrowError(strerror(errno), errno);
   }
 }
