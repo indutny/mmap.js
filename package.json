@@ -1,6 +1,6 @@
 {
   "name": "mmap.js",
-  "version": "0.2.2",
+  "version": "1.0.0",
   "description": "mmap bindings for node.js that work",
   "main": "lib/mmap.js",
   "scripts": {
