@@ -95,10 +95,10 @@ NAN_METHOD(Sync) {
     // optional argument: offset
     const size_t offset = args[1]->Uint32Value();
     if (length <= offset) {
-      return NanThrowError("Offset out of bounds", 22);
+      return NanThrowRangeError("Offset out of bounds");
     }
     else if (offset > 0 && (offset % getpagesize())) {
-      return NanThrowError("Offset must be a multiple of page size", 22);
+      return NanThrowRangeError("Offset must be a multiple of page size");
     }
 
     data += offset;
