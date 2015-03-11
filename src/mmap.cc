@@ -127,6 +127,7 @@ NAN_METHOD(Sync) {
   }
 }
 
+
 static void Init(Handle<Object> target) {
   NODE_SET_METHOD(target, "alloc", Alloc);
   NODE_SET_METHOD(target, "alignedAlloc", AlignedAlloc);
