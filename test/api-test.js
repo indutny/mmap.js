@@ -84,6 +84,33 @@ describe('mmap.js', function() {
       gc();
     });
 
+    it('should sync 4 pages at once', function () {
+      var file = __dirname + '/test-4-pages.txt';
+      fs.writeFileSync(file, (new Buffer(mmap.PAGE_SIZE * 4)).fill(0));
+      var fd = fs.openSync(file, 'r+');
+      var buf = mmap.alloc(
+          mmap.PAGE_SIZE * 4,
+          mmap.PROT_READ | mmap.PROT_WRITE,
+          mmap.MAP_SHARED,
+          fd,
+          0);
+      fs.closeSync(fd);
+      try {
+        assert(buf);
+        buf.fill(65);
+        assert(mmap.sync(buf));
+        var content = fs.readFileSync(file);
+        for (var i = 0; i < content.length; i++) {
+          assert(content[i] === 65);
+        }
+        fs.unlinkSync(file);
+      }
+      catch (e) {
+        fs.unlinkSync(file);
+        throw e;
+      }
+    });
+
     describe('sync errors', function () {
       var buf;
       beforeEach(function () {
