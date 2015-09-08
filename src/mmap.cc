@@ -29,125 +29,125 @@ static void DontFree(char* data, void* hint) {
 
 
 NAN_METHOD(Alloc) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  int len = args[0]->Uint32Value();
-  int prot = args[1]->Uint32Value();
-  int flags = args[2]->Uint32Value();
-  int fd = args[3]->Int32Value();
-  int off = args[4]->Uint32Value();
+  int len = info[0]->Uint32Value();
+  int prot = info[1]->Uint32Value();
+  int flags = info[2]->Uint32Value();
+  int fd = info[3]->Int32Value();
+  int off = info[4]->Uint32Value();
 
   void* res = mmap(NULL, len, prot, flags, fd, off);
   if (res == MAP_FAILED)
-    return NanThrowError("mmap() call failed");
+    return Nan::ThrowError("mmap() call failed");
 
-  NanReturnValue(NanNewBufferHandle(
+  info.GetReturnValue().Set(Nan::NewBuffer(
         reinterpret_cast<char*>(res),
         len,
         FreeCallback,
-        reinterpret_cast<void*>(static_cast<intptr_t>(len))));
+        reinterpret_cast<void*>(static_cast<intptr_t>(len))).ToLocalChecked());
 }
 
 
 NAN_METHOD(AlignedAlloc) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  int len = args[0]->Uint32Value();
-  int prot = args[1]->Uint32Value();
-  int flags = args[2]->Uint32Value();
-  int fd = args[3]->Int32Value();
-  int off = args[4]->Uint32Value();
-  int align = args[5]->Uint32Value();
+  int len = info[0]->Uint32Value();
+  int prot = info[1]->Uint32Value();
+  int flags = info[2]->Uint32Value();
+  int fd = info[3]->Int32Value();
+  int off = info[4]->Uint32Value();
+  int align = info[5]->Uint32Value();
 
   void* res = mmap(NULL, len + align, prot, flags, fd, off);
   if (res == MAP_FAILED)
-    return NanThrowError("mmap() call failed");
+    return Nan::ThrowError("mmap() call failed");
 
-  Local<Object> buf = NanNewBufferHandle(
+  Local<Object> buf = Nan::NewBuffer(
         reinterpret_cast<char*>(res),
         len,
         FreeCallback,
-        reinterpret_cast<void*>(static_cast<intptr_t>(len + align)));
+        reinterpret_cast<void*>(static_cast<intptr_t>(len + align))).ToLocalChecked();
 
   intptr_t ptr = reinterpret_cast<intptr_t>(res);
   if (ptr % align == 0)
-    NanReturnValue(buf);
+    info.GetReturnValue().Set(buf);
 
   // Slice the buffer if it was unaligned
   int slice_off = align - (ptr % align);
-  Local<Object> slice = NanNewBufferHandle(
+  Local<Object> slice = Nan::NewBuffer(
       reinterpret_cast<char*>(res) + slice_off,
       len,
       DontFree,
-      NULL);
+      NULL).ToLocalChecked();
 
-  slice->SetHiddenValue(NanNew("alignParent"), buf);
-  NanReturnValue(slice);
+  slice->SetHiddenValue(Nan::New("alignParent").ToLocalChecked(), buf);
+  info.GetReturnValue().Set(slice);
 }
 
 
 NAN_METHOD(Sync) {
-  NanScope();
-  char* data = node::Buffer::Data(args[0]->ToObject());
-  size_t length =  node::Buffer::Length(args[0]->ToObject());
+  Nan::HandleScope scope;
+  char* data = node::Buffer::Data(info[0]->ToObject());
+  size_t length =  node::Buffer::Length(info[0]->ToObject());
 
-  if (args.Length() > 1) {
+  if (info.Length() > 1) {
     // optional argument: offset
-    const size_t offset = args[1]->Uint32Value();
+    const size_t offset = info[1]->Uint32Value();
     if (length <= offset) {
-      return NanThrowRangeError("Offset out of bounds");
+      return Nan::ThrowRangeError("Offset out of bounds");
     } else if (offset > 0 && (offset % getpagesize())) {
-      return NanThrowRangeError("Offset must be a multiple of page size");
+      return Nan::ThrowRangeError("Offset must be a multiple of page size");
     }
 
     data += offset;
     length -= offset;
   }
 
-  if (args.Length() > 2) {
+  if (info.Length() > 2) {
     // optional argument: length
-    const size_t range = args[2]->Uint32Value();
+    const size_t range = info[2]->Uint32Value();
     if (range < length) {
       length = range;
     }
   }
 
   int flags;
-  if (args.Length() > 3) {
+  if (info.Length() > 3) {
     // optional argument: flags
-    flags = args[3]->Uint32Value();
+    flags = info[3]->Uint32Value();
   } else {
     flags = MS_SYNC;
   }
 
   if (msync(data, length, flags) == 0) {
-    NanReturnValue(NanTrue());
+    info.GetReturnValue().Set(Nan::True());
   } else {
-    return NanThrowError(strerror(errno), errno);
+    return Nan::ThrowError(strerror(errno));
   }
 }
 
 
 static void Init(Handle<Object> target) {
-  NODE_SET_METHOD(target, "alloc", Alloc);
-  NODE_SET_METHOD(target, "alignedAlloc", AlignedAlloc);
-  NODE_SET_METHOD(target, "sync", Sync);
+  Nan::SetMethod(target, "alloc", Alloc);
+  Nan::SetMethod(target, "alignedAlloc", AlignedAlloc);
+  Nan::SetMethod(target, "sync", Sync);
 
-  target->Set(NanNew("PROT_NONE"), NanNew<Number>(PROT_NONE));
-  target->Set(NanNew("PROT_READ"), NanNew<Number>(PROT_READ));
-  target->Set(NanNew("PROT_WRITE"), NanNew<Number>(PROT_WRITE));
-  target->Set(NanNew("PROT_EXEC"), NanNew<Number>(PROT_EXEC));
+  target->Set(Nan::New("PROT_NONE").ToLocalChecked(), Nan::New<Number>(PROT_NONE));
+  target->Set(Nan::New("PROT_READ").ToLocalChecked(), Nan::New<Number>(PROT_READ));
+  target->Set(Nan::New("PROT_WRITE").ToLocalChecked(), Nan::New<Number>(PROT_WRITE));
+  target->Set(Nan::New("PROT_EXEC").ToLocalChecked(), Nan::New<Number>(PROT_EXEC));
 
-  target->Set(NanNew("MAP_ANON"), NanNew<Number>(MAP_ANON));
-  target->Set(NanNew("MAP_PRIVATE"), NanNew<Number>(MAP_PRIVATE));
-  target->Set(NanNew("MAP_SHARED"), NanNew<Number>(MAP_SHARED));
-  target->Set(NanNew("MAP_FIXED"), NanNew<Number>(MAP_FIXED));
+  target->Set(Nan::New("MAP_ANON").ToLocalChecked(), Nan::New<Number>(MAP_ANON));
+  target->Set(Nan::New("MAP_PRIVATE").ToLocalChecked(), Nan::New<Number>(MAP_PRIVATE));
+  target->Set(Nan::New("MAP_SHARED").ToLocalChecked(), Nan::New<Number>(MAP_SHARED));
+  target->Set(Nan::New("MAP_FIXED").ToLocalChecked(), Nan::New<Number>(MAP_FIXED));
 
-  target->Set(NanNew("MS_ASYNC"), NanNew<Number>(MS_ASYNC));
-  target->Set(NanNew("MS_SYNC"), NanNew<Number>(MS_SYNC));
-  target->Set(NanNew("MS_INVALIDATE"), NanNew<Number>(MS_INVALIDATE));
+  target->Set(Nan::New("MS_ASYNC").ToLocalChecked(), Nan::New<Number>(MS_ASYNC));
+  target->Set(Nan::New("MS_SYNC").ToLocalChecked(), Nan::New<Number>(MS_SYNC));
+  target->Set(Nan::New("MS_INVALIDATE").ToLocalChecked(), Nan::New<Number>(MS_INVALIDATE));
 
-  target->Set(NanNew("PAGE_SIZE"), NanNew<Number>(getpagesize()));
+  target->Set(Nan::New("PAGE_SIZE").ToLocalChecked(), Nan::New<Number>(getpagesize()));
 }
 
 
