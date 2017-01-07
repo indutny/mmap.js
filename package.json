@@ -20,10 +20,10 @@
   },
   "homepage": "https://github.com/indutny/mmap.js",
   "devDependencies": {
-    "mocha": "^1.21.5"
+    "mocha": "^3.2.0"
   },
   "dependencies": {
     "bindings": "^1.2.1",
-    "nan": "^2.0.8"
+    "nan": "^2.5.0"
   }
 }

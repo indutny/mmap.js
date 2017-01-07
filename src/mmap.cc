@@ -81,7 +81,7 @@ NAN_METHOD(AlignedAlloc) {
       DontFree,
       NULL).ToLocalChecked();
 
-  slice->SetHiddenValue(Nan::New("alignParent").ToLocalChecked(), buf);
+  Nan::SetPrivate(slice, Nan::New("alignParent").ToLocalChecked(), buf);
   info.GetReturnValue().Set(slice);
 }
 
