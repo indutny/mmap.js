@@ -57,8 +57,8 @@ describe('mmap.js', function() {
 
   describe('.sync()', function () {
     beforeEach(function () {
-      this.file1 = os.tmpDir() + '/test.txt';
-      this.file2 = os.tmpDir() + '/test-4-pages.txt';
+      this.file1 = os.tmpdir() + '/test.txt';
+      this.file2 = os.tmpdir() + '/test-4-pages.txt';
       fs.writeFileSync(this.file1, Array(1000).join('Hello World '));
       fs.writeFileSync(this.file2, (new Buffer(mmap.PAGE_SIZE * 4)).fill(0));
     });
