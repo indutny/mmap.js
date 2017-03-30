@@ -2,6 +2,43 @@
 
 Working `mmap()` binding for node.js
 
+## API
+
+```js
+const mmap = require('mmap.js');
+
+// Allocate chunk of memory, see `man 2 mmap`
+const buf = mmap.alloc(
+    mmap.PAGE_SIZE /* len */,
+    mmap.PROT_READ | mmap.PROT_WRITE /* prot */,
+    mmap.MAP_ANON | mmap.MAP_PRIVATE /* flags */,
+    -1 /* fd */,
+    0 /* offset */);
+
+// File mapping:
+const fd = fs.openSync(this.file2, 'r+');
+const fileBuf = mmap.alloc(
+    mmap.PAGE_SIZE * 4,
+    mmap.PROT_READ | mmap.PROT_WRITE,
+    mmap.MAP_SHARED,
+    fd,
+    0);
+fs.closeSync(fd);
+
+// Syncing data
+mmap.sync(fileBuf, 0 /* off */, mmap.PAGE_SIZE /* len */,
+          mmap.MS_SYNC /* flags, default: MS_SYNC */)
+
+// Allocating memory with aligned address (low bits set to 0)
+const abuf = mmap.alignedAlloc(
+    mmap.PAGE_SIZE,
+    mmap.PROT_READ | mmap.PROT_WRITE,
+    mmap.MAP_ANON | mmap.MAP_PRIVATE,
+    -1,
+    0,
+    1024 * 1024 /* alignment value, address will be a multiple of it */);
+```
+
 ### License
 
 This software is licensed under the MIT License.
