@@ -2,6 +2,8 @@
 
 Working `mmap()` binding for node.js
 
+This version taken from https://github.com/indutny/mmap.js and modified works also under Windows.
+
 ## API
 
 ```js

@@ -105,6 +105,8 @@ describe('mmap.js', function() {
       for (var i = 0; i < content.length; i++) {
         assert(content[i] === 65);
       }
+      buf = null;
+      gc();
     });
 
     describe('sync errors', function () {
@@ -130,6 +132,8 @@ describe('mmap.js', function() {
           threw = true;
         }
         assert(threw);
+        buf = null;
+        gc();
       });
 
       it('should reject offsets larger than the length', function () {
@@ -141,6 +145,8 @@ describe('mmap.js', function() {
           threw = true;
         }
         assert(threw);
+        buf = null;
+        gc();
       });
     });
   });
