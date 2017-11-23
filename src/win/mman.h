@@ -29,16 +29,13 @@
 
 inline void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset) {
     if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC)) {
-        printf("caso0\n");
         return MAP_FAILED;
     }
     if (fd == -1) {
         if (!(flags & MAP_ANONYMOUS) || offset){
-            printf("caso1\n");
             return MAP_FAILED;
         }
     } else if (flags & MAP_ANONYMOUS){
-        printf("caso2\n");
         return MAP_FAILED;
     }
 
@@ -67,7 +64,6 @@ inline void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t 
     HANDLE fm = CreateFileMapping(h, nullptr, protect, dwEndHigh, dwEndLow, nullptr);
 
     if (fm == nullptr){
-      printf("caso5\n");
       return MAP_FAILED;
     }
 
