@@ -96,7 +96,7 @@ NAN_METHOD(Sync) {
     const size_t offset = info[1]->Uint32Value();
     if (length <= offset) {
       return Nan::ThrowRangeError("Offset out of bounds");
-    } else if (offset > 0 && (offset % getpagesize())) {
+    } else if (offset > 0 && (offset % sysconf(_SC_PAGE_SIZE))) {
       return Nan::ThrowRangeError("Offset must be a multiple of page size");
     }
 
