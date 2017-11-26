@@ -58,9 +58,10 @@ NAN_METHOD(Alloc) {
   if (res == MAP_FAILED)
     return Nan::ThrowError("mmap() call failed");
 
+  const std::size_t max_len = Nan::imp::kMaxLength;
   Local<Value> ret;
 
-  if (len <= Nan::imp::kMaxLength) {
+  if (len <= max_len) {
     ret = Nan::NewBuffer(
       reinterpret_cast<char*>(res),
       len,
@@ -69,10 +70,10 @@ NAN_METHOD(Alloc) {
   } else {
     std::size_t ret_arr_len;
 
-    if ((len % Nan::imp::kMaxLength) == 0) {
-      ret_arr_len = len / Nan::imp::kMaxLength;
+    if ((len % max_len) == 0) {
+      ret_arr_len = len / max_len;
     } else {
-      ret_arr_len = (len / Nan::imp::kMaxLength) + 1u;
+      ret_arr_len = (len / max_len) + 1u;
     }
 
     Local<Array> ret_arr = Nan::New<Array>(ret_arr_len);
@@ -81,14 +82,14 @@ NAN_METHOD(Alloc) {
       std::size_t curr_len;
 
       if (i == (ret_arr_len - 1) &&
-          (len % Nan::imp::kMaxLength) != 0) {
-        curr_len = len % Nan::imp::kMaxLength;
+          (len % max_len) != 0) {
+        curr_len = len % max_len;
       } else {
-        curr_len = Nan::imp::kMaxLength;
+        curr_len = max_len;
       }
 
       ret_arr->Set(i, Nan::NewBuffer(
-        reinterpret_cast<char*>(res) + (i * Nan::imp::kMaxLength),
+        reinterpret_cast<char*>(res) + (i * max_len),
         curr_len,
         FreeCallback,
         reinterpret_cast<void*>(static_cast<intptr_t>(curr_len))).ToLocalChecked());
