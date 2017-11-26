@@ -147,7 +147,8 @@ static void Init(Handle<Object> target) {
   target->Set(Nan::New("MS_SYNC").ToLocalChecked(), Nan::New<Number>(MS_SYNC));
   target->Set(Nan::New("MS_INVALIDATE").ToLocalChecked(), Nan::New<Number>(MS_INVALIDATE));
 
-  target->Set(Nan::New("PAGE_SIZE").ToLocalChecked(), Nan::New<Number>(sysconf(_SC_PAGE_SIZE)));
+  target->Set(Nan::New("PAGE_SIZE").ToLocalChecked(), Nan::New<Number>(
+    sysconf(_SC_PAGE_SIZE)));
 }
 
 
