@@ -138,18 +138,15 @@ static void Init(Handle<Object> target) {
   target->Set(Nan::New("PROT_WRITE").ToLocalChecked(), Nan::New<Number>(PROT_WRITE));
   target->Set(Nan::New("PROT_EXEC").ToLocalChecked(), Nan::New<Number>(PROT_EXEC));
 
-  unsigned int map_anonymous_flag;
+  Local<Number> map_anonymous_flag_javascript_number = Nan::New<Number>(0x00);
   bool map_anonymous_flag_supported = false;
 #if defined(MAP_ANONYMOUS)
-  map_anonymous_flag = MAP_ANONYMOUS;
+  map_anonymous_flag_javascript_number = Nan::New<Number>(MAP_ANONYMOUS);
   map_anonymous_flag_supported = true;
 #elif defined(MAP_ANON)
-  map_anonymous_flag = MAP_ANON;
+  map_anonymous_flag_javascript_number = Nan::New<Number>(MAP_ANON);
   map_anonymous_flag_supported = true;
-#else
-  map_anonymous_flag = 0x00;
 #endif
-  const auto map_anonymous_flag_javascript_number = Nan::New<Number>(map_anonymous_flag);
   target->Set(Nan::New("MAP_ANON").ToLocalChecked(), map_anonymous_flag_javascript_number);
   target->Set(Nan::New("MAP_ANONYMOUS").ToLocalChecked(), map_anonymous_flag_javascript_number);
   target->Set(Nan::New("MAP_ANONYMOUS_SUPPORTED").ToLocalChecked(), (map_anonymous_flag_supported) ? Nan::True() : Nan::False());
