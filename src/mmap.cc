@@ -4,12 +4,15 @@
 #include "nan.h"
 #include "errno.h"
 
+#include <cinttypes>
+#include <cstdlib>
 #include <sys/mman.h>
 #include <unistd.h>
 
 namespace node {
 namespace node_mmap {
 
+using v8::Array;
 using v8::Handle;
 using v8::Local;
 using v8::Number;
@@ -19,7 +22,7 @@ using v8::Value;
 static void FreeCallback(char* data, void* hint) {
   int err;
 
-  err = munmap(data, reinterpret_cast<intptr_t>(hint));
+  err = munmap(static_cast<void*>(data), static_cast<std::size_t>(reinterpret_cast<intptr_t>(hint)));
   assert(err == 0);
 }
 
@@ -31,21 +34,70 @@ static void DontFree(char* data, void* hint) {
 NAN_METHOD(Alloc) {
   Nan::HandleScope scope;
 
-  int len = info[0]->Uint32Value();
+  std::size_t len;
+
+  if (node::Buffer::HasInstance(info[0])) {
+    len = *reinterpret_cast<std::size_t *>(node::Buffer::Data(info[0]));
+  } else {
+    len = info[0]->Uint32Value();
+  }
+
   int prot = info[1]->Uint32Value();
   int flags = info[2]->Uint32Value();
   int fd = info[3]->Int32Value();
-  int off = info[4]->Uint32Value();
+
+  std::int64_t off;
+
+  if (node::Buffer::HasInstance(info[4])) {
+    off = *reinterpret_cast<std::int64_t *>(node::Buffer::Data(info[4]));
+  } else {
+    off = info[4]->Int32Value();
+  }
 
   void* res = mmap(NULL, len, prot, flags, fd, off);
   if (res == MAP_FAILED)
     return Nan::ThrowError("mmap() call failed");
 
-  info.GetReturnValue().Set(Nan::NewBuffer(
-        reinterpret_cast<char*>(res),
-        len,
+  Local<Value> ret;
+
+  if (len <= Nan::imp::kMaxLength) {
+    ret = Nan::NewBuffer(
+      reinterpret_cast<char*>(res),
+      len,
+      FreeCallback,
+      reinterpret_cast<void*>(static_cast<intptr_t>(len))).ToLocalChecked();
+  } else {
+    std::size_t ret_arr_len;
+
+    if ((len % Nan::imp::kMaxLength) == 0) {
+      ret_arr_len = len / Nan::imp::kMaxLength;
+    } else {
+      ret_arr_len = (len / Nan::imp::kMaxLength) + 1u;
+    }
+
+    Local<Array> ret_arr = Nan::New<Array>(ret_arr_len);
+
+    for (std::size_t i = 0u; i < ret_arr_len; i++) {
+      std::size_t curr_len;
+
+      if (i == (ret_arr_len - 1) &&
+          (len % Nan::imp::kMaxLength) != 0) {
+        curr_len = len % Nan::imp::kMaxLength;
+      } else {
+        curr_len = Nan::imp::kMaxLength;
+      }
+
+      ret_arr->Set(i, Nan::NewBuffer(
+        reinterpret_cast<char*>(res) + (i * Nan::imp::kMaxLength),
+        curr_len,
         FreeCallback,
-        reinterpret_cast<void*>(static_cast<intptr_t>(len))).ToLocalChecked());
+        reinterpret_cast<void*>(static_cast<intptr_t>(curr_len))).ToLocalChecked());
+    }
+
+    ret = ret_arr;
+  }
+
+  info.GetReturnValue().Set(ret);
 }
 
 
