@@ -96,7 +96,7 @@ NAN_METHOD(Sync) {
     const size_t offset = info[1]->Uint32Value();
     if (length <= offset) {
       return Nan::ThrowRangeError("Offset out of bounds");
-    } else if (offset > 0 && (offset % getpagesize())) {
+    } else if (offset > 0 && (offset % sysconf(_SC_PAGE_SIZE))) {
       return Nan::ThrowRangeError("Offset must be a multiple of page size");
     }
 
@@ -147,7 +147,8 @@ static void Init(Handle<Object> target) {
   target->Set(Nan::New("MS_SYNC").ToLocalChecked(), Nan::New<Number>(MS_SYNC));
   target->Set(Nan::New("MS_INVALIDATE").ToLocalChecked(), Nan::New<Number>(MS_INVALIDATE));
 
-  target->Set(Nan::New("PAGE_SIZE").ToLocalChecked(), Nan::New<Number>(getpagesize()));
+  target->Set(Nan::New("PAGE_SIZE").ToLocalChecked(), Nan::New<Number>(
+    sysconf(_SC_PAGE_SIZE)));
 }
 
 
