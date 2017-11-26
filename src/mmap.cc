@@ -138,7 +138,7 @@ static void Init(Handle<Object> target) {
   target->Set(Nan::New("PROT_WRITE").ToLocalChecked(), Nan::New<Number>(PROT_WRITE));
   target->Set(Nan::New("PROT_EXEC").ToLocalChecked(), Nan::New<Number>(PROT_EXEC));
 
-  Local<Number> map_anonymous_flag_number = Nan::New<Number>(0x00);
+  Local<Number> map_anonymous_flag_number;
   bool map_anonymous_supported = false;
 #if defined(MAP_ANONYMOUS)
   map_anonymous_flag_number = Nan::New<Number>(MAP_ANONYMOUS);
@@ -146,10 +146,15 @@ static void Init(Handle<Object> target) {
 #elif defined(MAP_ANON)
   map_anonymous_flag_number = Nan::New<Number>(MAP_ANON);
   map_anonymous_supported = true;
+#else
+  map_anonymous_flag_number = Nan::New<Number>(0x00);
 #endif
   target->Set(Nan::New("MAP_ANON").ToLocalChecked(), map_anonymous_flag_number);
   target->Set(Nan::New("MAP_ANONYMOUS").ToLocalChecked(), map_anonymous_flag_number);
-  target->Set(Nan::New("MAP_ANONYMOUS_SUPPORTED").ToLocalChecked(), (map_anonymous_supported) ? Nan::True() : Nan::False());
+  target->Set(Nan::New("MAP_ANONYMOUS_SUPPORTED").ToLocalChecked(),
+    (map_anonymous_supported) ?
+      Nan::True() :
+      Nan::False());
   target->Set(Nan::New("MAP_PRIVATE").ToLocalChecked(), Nan::New<Number>(MAP_PRIVATE));
   target->Set(Nan::New("MAP_SHARED").ToLocalChecked(), Nan::New<Number>(MAP_SHARED));
   target->Set(Nan::New("MAP_FIXED").ToLocalChecked(), Nan::New<Number>(MAP_FIXED));
