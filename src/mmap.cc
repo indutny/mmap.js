@@ -4,8 +4,14 @@
 #include "nan.h"
 #include "errno.h"
 
-#include <sys/mman.h>
+#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+#include <windows.h>
+#include "win/mman.h"
+#include "win/utils.h"
+#else
 #include <unistd.h>
+#include <sys/mman.h>
+#endif
 
 namespace node {
 namespace node_mmap {
